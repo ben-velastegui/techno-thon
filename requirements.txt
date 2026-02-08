@@ -1,0 +1,21 @@
+# Task Extraction System - Python Dependencies
+
+# LangGraph and LangChain
+langgraph==0.2.50
+langchain==0.3.14
+langchain-aws==0.2.6
+
+# FastAPI and server
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.5
+pydantic-settings==2.7.0
+
+# Database
+psycopg2-binary==2.9.10
+
+# AWS SDK
+boto3==1.35.93
+
+# Utilities
+python-dotenv==1.0.1

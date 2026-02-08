@@ -1,0 +1,228 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TaskFinalSchema",
+  "description": "Schema for QA-validated and prioritized tasks ready for database insertion",
+  "type": "object",
+  "required": [
+    "description",
+    "priority_score",
+    "priority_level",
+    "lineage_metadata",
+    "qa_metadata",
+    "prioritization_metadata"
+  ],
+  "properties": {
+    "description": {
+      "type": "string",
+      "minLength": 10
+    },
+    "participant_id": {
+      "type": ["integer", "null"]
+    },
+    "patient_id": {
+      "type": ["integer", "null"]
+    },
+    "category_id": {
+      "type": ["integer", "null"]
+    },
+    "due_date": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "priority_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 100.0,
+      "description": "Calculated priority score"
+    },
+    "priority_level": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "minimal"],
+      "description": "Priority level based on score"
+    },
+    "source_spans": {
+      "type": "object",
+      "description": "Character offsets from transcript",
+      "properties": {
+        "description": {
+          "$ref": "#/definitions/span"
+        },
+        "participant": {
+          "oneOf": [
+            {"$ref": "#/definitions/span"},
+            {"type": "null"}
+          ]
+        },
+        "patient": {
+          "oneOf": [
+            {"$ref": "#/definitions/span"},
+            {"type": "null"}
+          ]
+        },
+        "due_date": {
+          "oneOf": [
+            {"$ref": "#/definitions/span"},
+            {"type": "null"}
+          ]
+        }
+      },
+      "required": ["description"]
+    },
+    "enriched_fields": {
+      "type": "object",
+      "properties": {
+        "sla_hours": {"type": ["integer", "null"]},
+        "expected_completion_date": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "days_until_due": {"type": ["number", "null"]},
+        "is_overdue": {"type": "boolean"},
+        "category_name": {"type": ["string", "null"]},
+        "participant_name": {"type": ["string", "null"]},
+        "patient_name": {"type": ["string", "null"]},
+        "urgency_indicators": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "complexity_indicators": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "score_breakdown": {
+      "type": "object",
+      "required": ["base_score"],
+      "properties": {
+        "base_score": {"type": "number"},
+        "urgency_contribution": {"type": "number"},
+        "category_contribution": {"type": "number"},
+        "patient_acuity_contribution": {"type": "number"},
+        "complexity_contribution": {"type": "number"},
+        "sla_contribution": {"type": "number"}
+      },
+      "description": "Detailed breakdown of priority calculation"
+    },
+    "applied_weights": {
+      "type": "object",
+      "description": "Weights used in priority calculation",
+      "properties": {
+        "urgency_weight": {"type": "number"},
+        "category_weight": {"type": "number"},
+        "acuity_weight": {"type": "number"},
+        "complexity_weight": {"type": "number"},
+        "sla_weight": {"type": "number"}
+      }
+    },
+    "priority_explanation": {
+      "type": "string",
+      "description": "Human-readable explanation of priority"
+    },
+    "qa_warnings": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Non-critical warnings from QA"
+    },
+    "lineage_metadata": {
+      "type": "object",
+      "required": ["processing_chain"],
+      "properties": {
+        "processing_chain": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["agent_name", "agent_version", "policy_version", "timestamp"],
+            "properties": {
+              "agent_name": {
+                "type": "string",
+                "enum": ["extraction", "normalization", "qa", "prioritization"]
+              },
+              "agent_version": {"type": "string"},
+              "policy_version": {"type": "string"},
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "enrichment_sources": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {"type": "string"},
+                    "source": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "qa_metadata": {
+      "type": "object",
+      "required": [
+        "qa_decision",
+        "qa_confidence",
+        "validation_timestamp"
+      ],
+      "properties": {
+        "qa_decision": {
+          "type": "string",
+          "const": "accepted"
+        },
+        "qa_confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "validation_timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "checks_performed": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "prioritization_metadata": {
+      "type": "object",
+      "required": [
+        "algorithm_version",
+        "calculation_timestamp"
+      ],
+      "properties": {
+        "algorithm_version": {"type": "string"},
+        "calculation_timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "span": {
+      "type": "object",
+      "required": ["start_char", "end_char", "confidence"],
+      "properties": {
+        "start_char": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_char": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TaskDraftSchema",
+  "description": "Schema for extracted and normalized tasks before QA and prioritization",
+  "type": "object",
+  "required": ["description", "lineage_metadata"],
+  "properties": {
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Task description extracted from transcript"
+    },
+    "participant_id": {
+      "type": ["integer", "null"],
+      "description": "ID of participant who created/owns the task, null if ambiguous"
+    },
+    "patient_id": {
+      "type": ["integer", "null"],
+      "description": "ID of patient this task relates to, null if ambiguous or not applicable"
+    },
+    "category_id": {
+      "type": ["integer", "null"],
+      "description": "Task category ID, null if ambiguous"
+    },
+    "due_date": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 formatted due date, null if not mentioned"
+    },
+    "source_spans": {
+      "type": "object",
+      "description": "Character offsets tracking data provenance in transcript",
+      "properties": {
+        "description": {
+          "$ref": "#/definitions/span"
+        },
+        "participant": {
+          "oneOf": [
+            {"$ref": "#/definitions/span"},
+            {"type": "null"}
+          ]
+        },
+        "patient": {
+          "oneOf": [
+            {"$ref": "#/definitions/span"},
+            {"type": "null"}
+          ]
+        },
+        "due_date": {
+          "oneOf": [
+            {"$ref": "#/definitions/span"},
+            {"type": "null"}
+          ]
+        }
+      },
+      "required": ["description"]
+    },
+    "enriched_fields": {
+      "type": "object",
+      "description": "Fields added during normalization",
+      "properties": {
+        "sla_hours": {
+          "type": ["integer", "null"],
+          "description": "SLA in hours based on category"
+        },
+        "expected_completion_date": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Computed from due_date or SLA"
+        },
+        "days_until_due": {
+          "type": ["number", "null"],
+          "description": "Calculated days until due date"
+        },
+        "is_overdue": {
+          "type": "boolean",
+          "description": "Whether task is past due date"
+        },
+        "category_name": {
+          "type": ["string", "null"],
+          "description": "Human-readable category name"
+        },
+        "participant_name": {
+          "type": ["string", "null"],
+          "description": "Human-readable participant name"
+        },
+        "patient_name": {
+          "type": ["string", "null"],
+          "description": "Human-readable patient name"
+        },
+        "urgency_indicators": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Detected urgency signals for prioritization"
+        },
+        "complexity_indicators": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Detected complexity signals"
+        }
+      }
+    },
+    "policy_violations": {
+      "type": "array",
+      "description": "Violations detected during extraction or normalization",
+      "items": {
+        "type": "object",
+        "required": ["rule_id", "description", "severity"],
+        "properties": {
+          "rule_id": {"type": "string"},
+          "description": {"type": "string"},
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "warning", "info"]
+          }
+        }
+      }
+    },
+    "lineage_metadata": {
+      "type": "object",
+      "description": "Complete processing lineage",
+      "required": ["processing_chain"],
+      "properties": {
+        "processing_chain": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["agent_name", "agent_version", "policy_version", "timestamp"],
+            "properties": {
+              "agent_name": {
+                "type": "string",
+                "enum": ["extraction", "normalization"]
+              },
+              "agent_version": {"type": "string"},
+              "policy_version": {"type": "string"},
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "enrichment_sources": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {"type": "string"},
+                    "source": {
+                      "type": "string",
+                      "enum": ["extraction", "policy_default", "db_lookup", "computed"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "span": {
+      "type": "object",
+      "required": ["start_char", "end_char", "confidence"],
+      "properties": {
+        "start_char": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_char": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "text": {
+          "type": "string",
+          "description": "Optional verbatim text from transcript"
+        }
+      }
+    }
+  }
+}
